@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 import {
     ComposedChart, Bar, XAxis, YAxis, Tooltip, ReferenceDot,
@@ -7,28 +8,30 @@ import {
 } from "recharts";
 import "./Dashboard.css";
 
-const API_URL = "https://cloud.appwrite.io/v1/databases/67d5be53002f133cb332/collections/67d5be71001688b1cb93/documents/67d5c113003c26d94f03";
 const API_KEY = 'standard_849d30cfda41bec486c6cc6abbbffa650686f26fd69e3e76e6a8ebcea3cc02df1ed74daec826e4e5cc3eccb438be781f8e751ad7fad17074222134d9a8ed15c155f5beed2a68a9282d2bea4435683fe5dd4887b79bd0e264880a1b1b8d8b328746cded7335cf8a8247c4cd01a5fd07c10ee60cce46dd0317874f6ce26e6b97c9';
-
 const COLORS = ["#4A90E2", "#50E3C2", "#F5A623", "#D0021B", "#9B9B9B"];
 
 function Dashboard() {
+    const { id } = useParams(); // Dynamic document ID
     const [studentData, setStudentData] = useState(null);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        axios.get(API_URL, {
-            headers: {
-                "X-Appwrite-Project": "67d5bc1d002708a5e2b8",
-                "X-Appwrite-Key": API_KEY
+        axios.get(
+            `https://cloud.appwrite.io/v1/databases/67d5be53002f133cb332/collections/67d5be71001688b1cb93/documents/${id}`,
+            {
+                headers: {
+                    "X-Appwrite-Project": "67d5bc1d002708a5e2b8",
+                    "X-Appwrite-Key": API_KEY
+                }
             }
-        }).then((response) => {
-            setStudentData(response.data);
-        }).catch(error => {
-            console.error("Error fetching data:", error);
-            setError("Failed to load data. Please try again later.");
+        ).then((res) => {
+            setStudentData(res.data);
+        }).catch((err) => {
+            console.error("Error fetching student:", err);
+            setError("Unable to fetch student data.");
         });
-    }, []);
+    }, [id]);
 
     if (error) return <h2 className="error">{error}</h2>;
     if (!studentData) return <h2 className="loading">Loading...</h2>;
@@ -76,7 +79,6 @@ function Dashboard() {
             {/* Score Visualization */}
             <div className="charts-container">
                 <h3 className="section-title">Performance Overview</h3>
-
                 <div className="charts-grid">
                     {/* Bar Chart */}
                     <div className="chart-box">
@@ -161,9 +163,6 @@ function Dashboard() {
                         })}
                 </div>
             </div>
-
-            {/* Mispronounced Words */}
-            
         </div>
     );
 }
