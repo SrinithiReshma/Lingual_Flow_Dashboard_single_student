@@ -1,11 +1,22 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from appwrite.client import Client
+from appwrite.query import Query
 from appwrite.services.databases import Databases
 import datetime
 
 app = Flask(__name__)
 CORS(app)
+from flask_cors import CORS
+
+
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')  # For dev only
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PATCH,PUT,DELETE,OPTIONS')
+    return response
 
 client = Client()
 client.set_endpoint("https://cloud.appwrite.io/v1")
@@ -109,7 +120,7 @@ def get_collection_data(collection_id):
         return jsonify({'error': str(e)}), 500
     
 
-    
+
 @app.route('/get-collections', methods=['GET'])
 def get_collections():
     try:
@@ -125,6 +136,29 @@ def get_collections():
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/students/<document_id>', methods=['PATCH'])
+def update_student_audio_url(document_id):
+    data = request.get_json()
+    audio_url = data.get('audio_url')
+    collection_id = data.get('collectionId')
+
+    if not collection_id or not audio_url:
+        return jsonify({"error": "collectionId and audio_url are required"}), 400
+
+    try:
+        databases.update_document(
+            database_id=database_id,
+            collection_id=collection_id,
+            document_id=document_id,
+            data={"audio_url": audio_url}
+        )
+        return jsonify({"message": "Audio URL updated successfully."}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 if __name__ == '__main__':
