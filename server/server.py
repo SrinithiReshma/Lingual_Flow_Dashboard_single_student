@@ -96,6 +96,36 @@ def get_student_names():
         return jsonify({"students": names})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/collection/<collection_id>', methods=['GET'])
+def get_collection_data(collection_id):
+    try:
+        response = databases.list_documents(
+            database_id="67d5be53002f133cb332",
+            collection_id=collection_id
+        )
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+    
+@app.route('/get-collections', methods=['GET'])
+def get_collections():
+    try:
+        response = databases.list_collections(database_id)
+        collections = response["collections"]
+        EXCLUDED_COLLECTION_ID = "67f3ae5300238195f90b"
+
+        result = [
+            {"id": col["$id"], "name": col["name"]}
+            for col in collections if col["$id"] != EXCLUDED_COLLECTION_ID
+        ]
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
