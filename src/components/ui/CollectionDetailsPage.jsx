@@ -3,11 +3,12 @@ import { useParams, Link } from 'react-router-dom';
 import { Client, Storage, ID } from 'appwrite';
 
 const CollectionDetailsPage = () => {
+  const [selectedFiles, setSelectedFiles] = useState({});
   const { collectionId } = useParams();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mediaRecorder, setMediaRecorder] = useState(null);
-  const [ setAudioChunks] = useState([]);
+  const [audioChunks, setAudioChunks] = useState([]);
   const [recordingStudentId, setRecordingStudentId] = useState(null);
 
   // ✅ Appwrite setup
@@ -87,7 +88,37 @@ const CollectionDetailsPage = () => {
       mediaRecorder.stop();
     }
   };
-
+  const handleFileChange = (event, studentId) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    setSelectedFiles((prev) => ({ ...prev, [studentId]: file }));
+  };
+  const submitUpload = async (studentId) => {
+    const file = selectedFiles[studentId];
+    if (!file) {
+      alert("❌ No file selected.");
+      return;
+    }
+  
+    try {
+      const res = await storage.createFile(BUCKET_ID, ID.unique(), file);
+  
+      const audioURL = `https://cloud.appwrite.io/v1/storage/buckets/${BUCKET_ID}/files/${res.$id}/view?project=67d5bc1d002708a5e2b8`;
+  
+      await fetch(`http://localhost:5000/students/${studentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audio_url: audioURL, collectionId: collectionId }),
+      });
+  
+      alert("✅ Audio file uploaded and student updated.");
+      setSelectedFiles((prev) => ({ ...prev, [studentId]: null }));
+    } catch (error) {
+      console.error("❌ Upload failed:", error);
+      alert("❌ Failed to upload audio file.");
+    }
+  };
+    
   return (
     <div className="min-h-screen bg-gray-100 px-6 py-8 flex flex-col items-center">
       <h2 className="text-4xl font-bold mb-4 text-blue-700 text-center">Student Details</h2>
@@ -128,9 +159,31 @@ const CollectionDetailsPage = () => {
                         Take Test
                       </button>
                     )}
+                     <input
+  type="file"
+  accept="audio/*"
+  onChange={(e) => handleFileChange(e, student.$id)}
+  className="block w-full text-sm text-gray-600
+             file:mr-4 file:py-2 file:px-4
+             file:rounded-full file:border-0
+             file:text-sm file:font-semibold
+             file:bg-blue-50 file:text-blue-700
+             hover:file:bg-blue-100"
+/>
+
+{selectedFiles[student.$id] && (
+  <button
+    onClick={() => submitUpload(student.$id)}
+    className="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-full transition"
+  >
+    Submit
+  </button>
+)}
+
                   </td>
                 </tr>
               ))}
+              
             </tbody>
           </table>
         </div>

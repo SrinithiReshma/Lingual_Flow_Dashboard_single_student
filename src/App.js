@@ -6,6 +6,9 @@ import TestPage from "./components/ui/TestPage";
 import WelcomePage from "./components/ui/WelcomePage"; // ✅ New Import
 
 import CollectionDetailsPage from './components/ui/CollectionDetailsPage';
+import EvaluatePage from './components/ui/EvaluatePage';
+
+// Inside <Routes>:
 
 function App() {
   return (
@@ -17,6 +20,8 @@ function App() {
         <Route path="/students" element={<StudentList />} />
         <Route path="/dashboard/:id" element={<Dashboard />} />
         <Route path="/start-test" element={<TestPage />} />
+        <Route path="/evaluate/:collectionId" element={<EvaluatePage />} />
+
       </Routes>
     </Router>
   );

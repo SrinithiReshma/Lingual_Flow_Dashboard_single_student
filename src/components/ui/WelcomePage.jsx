@@ -41,14 +41,25 @@ const WelcomePage = () => {
           <p className="text-gray-600">No collections found.</p>
         ) : (
           <ul className="space-y-2">
-            {collections.map((col) => (
-              <li key={col.id} className="border p-2 rounded bg-gray-50 hover:bg-gray-100">
-                <Link to={`/collection/${col.id}`} className="text-blue-600 hover:underline">
-                  {col.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {collections.map((col) => (
+            <li
+              key={col.id}
+              className="flex justify-between items-center border p-2 rounded bg-gray-50 hover:bg-gray-100"
+            >
+              <Link to={`/collection/${col.id}`} className="text-blue-600 hover:underline">
+                {col.name}
+              </Link>
+        
+              <Link
+                to={`/evaluate/${col.id}`}
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded"
+              >
+                Evaluate
+              </Link>
+            </li>
+          ))}
+        </ul>
+        
         )}
       </div>
     </div>
