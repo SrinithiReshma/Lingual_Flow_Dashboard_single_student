@@ -1,15 +1,45 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import math
 from appwrite.client import Client
 from appwrite.query import Query
 from appwrite.services.databases import Databases
 import datetime
+import tempfile
+import requests
+import whisper
+import os
+import nltk
+import google.generativeai as genai
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk import pos_tag
+import re
+from bs4 import BeautifulSoup
+from googlesearch import search
+from sentence_transformers import SentenceTransformer
+from scipy.spatial.distance import cosine
+from pydub import AudioSegment, silence
 
+embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+# One-time downloads
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('averaged_perceptron_tagger') 
+nltk.download('punkt_tab')
+nltk.download('averaged_perceptron_tagger_eng')
 app = Flask(__name__)
 CORS(app)
-from flask_cors import CORS
 
 
+genai.configure(api_key="AIzaSyCbzwmZgzmrz_YajlMLXOhTc-GvVo6FfYI")
+
+
+
+# ✅ Custom temp directory (to avoid permission issues in admin mode)
+custom_temp_dir = "C:\\Temp"
+os.makedirs(custom_temp_dir, exist_ok=True)
+tempfile.tempdir = custom_temp_dir  # override default temp dir
 
 @app.after_request
 def after_request(response):
@@ -159,6 +189,252 @@ def update_student_audio_url(document_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+def transcribe_audio(file_path):
+    print("🧠 Transcribing audio with Whisper...")
+    model = whisper.load_model("medium.en")  # Use "base", "small", etc., for lighter model
+    result = model.transcribe(file_path)
+    return result["text"]
+def generate_vocabulary_suggestions(transcript: str) -> str:
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    prompt = (
+        "The transcript given is a transcript of a speaker who knows only basic English, "
+        "so I need you to give some words that can be used instead of others. "
+        "Don't give any other content."
+        f"\n\nText: {transcript}"
+    )
+    try:
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        print("❌ Error generating vocabulary suggestions:", e)
+        return ""
+def load_standard_vocab():
+    try:
+        with open("words_alpha.txt", "r", encoding="utf-8") as f:
+            return set(word.strip().lower() for word in f)
+    except FileNotFoundError:
+        print("Error: words_alpha.txt not found.")
+        return set()
+def calculate_fluency_score(audio_file_path: str) -> float:
+    audio = AudioSegment.from_wav(audio_file_path)
+    silent_ranges = silence.detect_silence(
+        audio,
+        min_silence_len=200,
+        silence_thresh=-45
+    )
+    # convert ms to s
+    timestamps = [(start/1000, end/1000) for start, end in silent_ranges]
+
+    fluency_scores = {
+        "Native-like fluency (micro-pause)": 5,
+        "Mild hesitation (acceptable)": 4,
+        "Noticeable hesitation (possible disfluency)": 3,
+        "Fluency breakdown (disrupts communication)": 2,
+        "Major hesitation (fluency issue)": 1,
+    }
+
+    score_list = []
+    for start, end in timestamps:
+        dur = end - start
+        if   dur <= 0.3:  level = "Native-like fluency (micro-pause)"
+        elif dur <= 0.7:  level = "Mild hesitation (acceptable)"
+        elif dur <= 1.0:  level = "Noticeable hesitation (possible disfluency)"
+        elif dur <= 1.5:  level = "Fluency breakdown (disrupts communication)"
+        else:             level = "Major hesitation (fluency issue)"
+        score_list.append(fluency_scores[level])
+
+    # average, or perfect 5 if no silences detected
+    avg = sum(score_list)/len(score_list) if score_list else 5
+    # map from 1–5 into 0–100
+    return round(((avg - 1) / 4) * 100, 1)
+
+
+def preprocess_text(text):
+    tokens = word_tokenize(text.lower())
+    words = [word for word in tokens if word.isalpha()]
+    
+    stop_words = set(stopwords.words("english"))
+    filtered_words = [word for word in words if word not in stop_words]
+
+    # Remove proper nouns (NNP, NNPS)
+    tagged = pos_tag(filtered_words)
+    clean_words = [word for word, tag in tagged if tag not in ("NNP", "NNPS")]
+    
+    return clean_words
+
+def calculate_standard_scores(total_words, unique_words):
+    if total_words == 0:
+        return {"TTR": 0, "Lexical Density": 0, "Herdan’s C": 0, "Guiraud’s Index": 0}
+
+    ttr = unique_words / total_words
+    lexical_words = total_words * 0.6
+    lexical_density = (lexical_words / total_words) * 100
+    herdans_c = math.log(unique_words) / math.log(total_words) if total_words > 1 else 0
+    guiraud_index = unique_words / math.sqrt(total_words)
+
+    return {
+        "TTR": round(ttr, 4),
+        "Lexical Density (%)": round(lexical_density, 2),
+        "Herdan’s C": round(herdans_c, 4),
+        "Guiraud’s Index": round(guiraud_index, 4)
+    }
+
+def calculate_final_score(metrics):
+    ttr_score = metrics["TTR"] * 30
+    lexical_density_score = metrics["Lexical Density (%)"] * 0.3
+    herdans_score = metrics["Herdan’s C"] * 20
+    guiraud_score = metrics["Guiraud’s Index"] * 5
+    return round(ttr_score + lexical_density_score + herdans_score + guiraud_score, 2)
+
+def categorize_errors(analysis_result: str):
+    minor, moderate, major = 0, 0, 0
+    for line in analysis_result.split("\n"):
+        if "->" in line:
+            error, _ = line.split("->", 1)
+            error = error.strip().lower()
+            if any(k in error for k in [" is ", " was ", " did ", " has ", " have ", " in ", " on ", " at "]):
+                minor += 1
+            elif len(error.split()) == 2:
+                moderate += 1
+            elif len(error.split()) > 2:
+                major += 1
+    return minor, moderate, major
+
+def calculate_grammar_score(transcript: str, minor: int, moderate: int, major: int) -> float:
+    total_words = len(transcript.split())
+    if total_words == 0:
+        return 100.0
+    raw = 100 - (minor * 1) - (moderate * 3) - (major * 5)
+    return round(max(10.0, raw), 1)
+
+def grammar_suggestions_only(transcript: str) -> str:
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    prompt = (
+        "Identify incorrect words/phrases and suggest corrections in this transcript.\n"
+        "Output format: 'Incorrect -> Correct'.\n\n"
+        f"Transcript:\n{transcript}"
+    )
+    try:
+        return model.generate_content(prompt).text.strip()
+    except Exception as e:
+        print("❌ Error generating grammar suggestions:", e)
+        return ""
+def google_search(topic, num_results=5):
+    return list(search(topic, num_results=num_results, lang="en"))
+
+def scrape_text(url):
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        resp = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(resp.text, "html.parser")
+        for tag in soup(["script", "style"]):
+            tag.extract()
+        text = soup.get_text(separator=" ")
+        return re.sub(r'\s+', ' ', text).strip()[:2000]
+    except Exception as e:
+        print(f"Failed to scrape {url}: {e}")
+        return ""
+
+def compute_similarity(text1, text2):
+    emb1 = embedding_model.encode(text1, convert_to_numpy=True)
+    emb2 = embedding_model.encode(text2, convert_to_numpy=True)
+    return 1 - cosine(emb1, emb2)
+
+def compare_with_online_sources(topic, transcript):
+    urls = google_search(topic)
+    sims = []
+    for url in urls:
+        txt = scrape_text(url)
+        if txt:
+            sims.append((url, compute_similarity(transcript, txt)))
+    return sims
+
+def calculate_top_score(similarity_scores):
+    if not similarity_scores:
+        return 0.0
+    top = max(score for _, score in similarity_scores)
+    return round(top * 100, 1)
+
+def vocabulary_analysis(text):
+    words = preprocess_text(text)
+    total_words = len(words)
+    unique_words = len(set(words))
+    standard_vocab = load_standard_vocab()
+    valid_unique_words = len(set(words).intersection(standard_vocab))
+    metrics = calculate_standard_scores(total_words, valid_unique_words)
+    vocab_score = min(100,calculate_final_score(metrics))
+
+    return {
+        "Total Words (after stopwords & proper nouns removed)": total_words,
+        "Unique Words (in Standard Vocabulary)": valid_unique_words,
+        **metrics,
+        "Vocabulary Score (out of 100)": vocab_score
+    }
+
+# ✅ Transcribe route
+@app.route("/transcribe", methods=["POST"])
+def transcribe():
+    data = request.get_json()
+    student_id = data.get("studentId")
+    audio_url = data.get("audioURL")
+    collection_id = data.get("collectionId")
+
+    if not student_id or not audio_url or not collection_id:
+        return jsonify({"error": "studentId, audioURL, and collectionId are required"}), 400
+
+    try:
+        # ✅ Download the audio file
+        response = requests.get(audio_url)
+        response.raise_for_status()
+
+        # ✅ Use fixed temp directory
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False, dir=custom_temp_dir) as temp_audio:
+            temp_audio.write(response.content)
+            temp_audio.flush()
+            audio_path = temp_audio.name
+
+        # ✅ Transcribe the audio
+        transcription = transcribe_audio(audio_path)
+        vocab_results = vocabulary_analysis(transcription)
+        vocab_score = vocab_results["Vocabulary Score (out of 100)"]
+        suggestions = generate_vocabulary_suggestions(transcription)
+        grammar_sugg = grammar_suggestions_only(transcription)
+        minor, moderate, major = categorize_errors(grammar_sugg)
+        grammar_score = calculate_grammar_score(transcription, minor, moderate, major)
+        grammar_score_int = int(grammar_score) 
+        topic = data.get("topic") or transcription.split(".")[0]
+        sims = compare_with_online_sources(topic, transcription)
+        context_score = int(calculate_top_score(sims))
+        fluency_score = calculate_fluency_score(audio_path)
+        fluency_int   = int(fluency_score)
+
+        # ✅ Remove temp file after transcription
+        if os.path.exists(audio_path):
+            os.remove(audio_path)
+
+        # ✅ Update student's document in Appwrite
+        databases.update_document(
+            database_id=database_id,
+            collection_id=collection_id,
+            document_id=student_id,
+            data={
+                "transcribe_txt": transcription,
+                "vocab_score": int(vocab_score),
+                "vocab_suggestion": suggestions,
+                "grammar_score":    grammar_score,
+                "grammar_suggestion": grammar_sugg,
+                "context_score":        context_score,
+                "fluency_score":       fluency_int 
+
+            }
+        )
+
+        return jsonify({"message": "Transcription saved.", "transcription": transcription,"vocab_analysis": vocab_results}), 200
+
+    except Exception as e:
+        print("❌ Error:", e)
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':

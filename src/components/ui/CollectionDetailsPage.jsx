@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Client, Storage, ID } from 'appwrite';
-
+import axios from 'axios';
 const CollectionDetailsPage = () => {
   const [selectedFiles, setSelectedFiles] = useState({});
   const { collectionId } = useParams();
@@ -118,7 +118,28 @@ const CollectionDetailsPage = () => {
       alert("❌ Failed to upload audio file.");
     }
   };
-    
+  const handleAnalyse = async (studentId, audioURL, collectionId) => {
+    console.log("DEBUG:", { studentId, audioURL, collectionId });
+  
+    if (!studentId || !audioURL || !collectionId) {
+      console.error("Missing required fields", { studentId, audioURL, collectionId });
+      return;
+    }
+  
+    try {
+      const response = await axios.post("http://localhost:5000/transcribe", {
+        studentId,
+        audioURL,
+        collectionId // Ensure this is passed
+      });
+      // Handle the response here
+    } catch (error) {
+      console.error("API Error:", error);
+    }
+  };
+  
+  
+  
   return (
     <div className="min-h-screen bg-gray-100 px-6 py-8 flex flex-col items-center">
       <h2 className="text-4xl font-bold mb-4 text-blue-700 text-center">Student Details</h2>
@@ -158,6 +179,7 @@ const CollectionDetailsPage = () => {
                       >
                         Take Test
                       </button>
+                      
                     )}
                      <input
   type="file"
@@ -177,6 +199,14 @@ const CollectionDetailsPage = () => {
     className="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-full transition"
   >
     Submit
+  </button>
+)}
+{student.audio_url && (
+  <button
+    onClick={() => handleAnalyse(student.$id, student.audio_url,collectionId)}
+    className="mt-2 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-full transition"
+  >
+    Analyse
   </button>
 )}
 
