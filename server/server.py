@@ -20,6 +20,13 @@ from googlesearch import search
 from sentence_transformers import SentenceTransformer
 from scipy.spatial.distance import cosine
 from pydub import AudioSegment, silence
+from gtts import gTTS
+from fastdtw import fastdtw
+from scipy.spatial.distance import euclidean
+import speech_recognition as sr
+import librosa
+import spacy
+nlp = spacy.load("en_core_web_sm")
 
 embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 # One-time downloads
@@ -372,6 +379,111 @@ def vocabulary_analysis(text):
         "Vocabulary Score (out of 100)": vocab_score
     }
 
+def generate_reference_audio(text, filename="reference.wav"):
+    tts = gTTS(text=text, lang='en')
+    tts.save(filename)
+    return filename
+
+def extract_mfcc(audio_path):
+    try:
+        y, sr = librosa.load(audio_path, sr=16000)
+        mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
+        return mfcc.T
+    except Exception as e:
+        print(f"❌ Error extracting MFCC: {str(e)}")
+        return None
+
+def remove_proper_nouns(text):
+    doc = nlp(text)
+    return " ".join([token.text for token in doc if token.pos_ != "PROPN"])
+
+def filter_words(word):
+    doc = nlp(word)
+    for token in doc:
+        if token.is_stop or token.pos_ == "PROPN":
+            return False
+    if re.search(r'\d', word):
+        return False
+    return True
+
+def compare_audio(reference_audio, user_audio, reference_text):
+    ref_mfcc = extract_mfcc(reference_audio)
+    user_mfcc = extract_mfcc(user_audio)
+
+    if ref_mfcc is None or user_mfcc is None:
+        return 0, []
+
+    distance, _ = fastdtw(ref_mfcc, user_mfcc, dist=euclidean)
+    print(f"📏 DTW Distance: {distance}")
+
+    # Shorter scoring range
+    if distance < 250000:
+        pronunciation_score = 100
+    elif distance < 300000:
+        pronunciation_score = 85
+    elif distance < 450000:
+        pronunciation_score = 75
+    elif distance < 560000:
+        pronunciation_score = 60
+    elif distance < 650000:
+        pronunciation_score = 40
+    else:
+        pronunciation_score = 20
+
+    
+
+    return pronunciation_score
+
+def calculate_cefr_score(fluency, pronunciation, grammar, vocabulary, context):
+    # Define weightage
+    weightage = {
+        "fluency": 0.30,
+        "pronunciation": 0.25,
+        "grammar": 0.20,
+        "vocabulary": 0.15,
+        "context": 0.10
+    }
+
+    # Calculate weighted score
+    total_score = (
+        fluency * weightage["fluency"] +
+        pronunciation * weightage["pronunciation"] +
+        grammar * weightage["grammar"] +
+        vocabulary * weightage["vocabulary"] +
+        context * weightage["context"]
+    )
+
+    # Map score to CEFR Level
+    if total_score >= 90:
+        cefr_level = "C2 (Proficient)"
+    elif total_score >= 80:
+        cefr_level = "C1 (Advanced)"
+    elif total_score >= 70:
+        cefr_level = "B2 (Upper-Intermediate)"
+    elif total_score >= 60:
+        cefr_level = "B1 (Intermediate)"
+    elif total_score >= 50:
+        cefr_level = "A2 (Elementary)"
+    else:
+        cefr_level = "A1 (Beginner)"
+
+    return total_score, cefr_level
+
+# Assign grade based on CEFR Level
+def assign_grade(cefr_level):
+    grade_mapping = {
+        "C2 (Proficient)": "A",
+        "C1 (Advanced)": "A",
+        "B2 (Upper-Intermediate)": "B",
+        "B1 (Intermediate)": "C",
+        "A2 (Elementary)": "D",
+        "A1 (Beginner)": "F"
+    }
+    return grade_mapping.get(cefr_level, "F")
+
+
+
+
 # ✅ Transcribe route
 @app.route("/transcribe", methods=["POST"])
 def transcribe():
@@ -408,6 +520,12 @@ def transcribe():
         context_score = int(calculate_top_score(sims))
         fluency_score = calculate_fluency_score(audio_path)
         fluency_int   = int(fluency_score)
+        reference_audio_path = generate_reference_audio(transcription)
+        print(reference_audio_path)
+        pronunciation_score = compare_audio(reference_audio_path, audio_path, transcription)
+        total_score, cefr_level=calculate_cefr_score(fluency_score, pronunciation_score, grammar_score, vocab_score, context_score)
+        grade = assign_grade(cefr_level)
+
 
         # ✅ Remove temp file after transcription
         if os.path.exists(audio_path):
@@ -425,7 +543,10 @@ def transcribe():
                 "grammar_score":    grammar_score,
                 "grammar_suggestion": grammar_sugg,
                 "context_score":        context_score,
-                "fluency_score":       fluency_int 
+                "fluency_score":       fluency_int,
+                "pronunciation_score": int(pronunciation_score),
+                "total_score":int(total_score),
+                "grade":grade
 
             }
         )
@@ -438,4 +559,4 @@ def transcribe():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)
