@@ -1,0 +1,106 @@
+/* Main container for the analysis page */
+.analysis-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 60px 30px;
+    background: linear-gradient(to bottom right, #f4f8fd, #dfe6f3);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  /* Header styles */
+  .analysis-header {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+  
+  .analysis-header h2 {
+    font-size: 36px;
+    font-weight: 700;
+    color: #2b4f81;
+    margin-bottom: 15px;
+  }
+  
+  .analysis-header p {
+    font-size: 18px;
+    color: #444;
+    line-height: 1.6;
+  }
+  
+  /* Content area */
+  .analysis-content {
+    background-color: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px;
+    text-align: center;
+  }
+  
+  .analysis-message {
+    font-size: 20px;
+    font-weight: 500;
+    color: #333;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #f7faff;
+    margin-top: 30px;
+  }
+  
+  .analysis-message:empty {
+    display: none;
+  }
+  
+  .analysis-message::before {
+    content: "✅ Analysis Completed: ";
+    font-weight: 700;
+    color: #28a745;
+  }
+  
+  .analysis-message.error::before {
+    content: "❌ Error during analysis: ";
+    color: #dc3545;
+    font-weight: 700;
+  }
+  
+  .analysis-message.success {
+    background-color: #e9f7ef;
+    color: #28a745;
+  }
+  
+  .analysis-message.error {
+    background-color: #f8d7da;
+    color: #dc3545;
+  }
+  
+  /* Add some spacing between text and the message */
+  .analysis-header p {
+    margin-bottom: 40px;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .analysis-container {
+      padding: 40px 20px;
+    }
+  
+    .analysis-header h2 {
+      font-size: 28px;
+    }
+  
+    .analysis-header p {
+      font-size: 16px;
+    }
+  
+    .analysis-content {
+      padding: 30px;
+    }
+  
+    .analysis-message {
+      font-size: 18px;
+    }
+  }
+  

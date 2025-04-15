@@ -1,0 +1,117 @@
+/* WelcomePage.css */
+
+.welcome-container {
+    min-height: 100vh;
+    padding: 60px 40px;
+    background: linear-gradient(to bottom right, #f0f4fb, #dce9ff);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .welcome-header {
+    text-align: center;
+    max-width: 800px;
+    margin-bottom: 50px;
+  }
+  
+  .welcome-header h1 {
+    font-size: 42px;
+    font-weight: 700;
+    color: #2b4f81;
+    margin-bottom: 20px;
+  }
+  
+  .welcome-header p {
+    font-size: 18px;
+    color: #444;
+    margin-bottom: 30px;
+    line-height: 1.6;
+  }
+  
+  .start-button {
+    padding: 12px 28px;
+    background-color: #2b4f81;
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+  }
+  
+  .start-button:hover {
+    background-color: #1e3a61;
+  }
+  
+  .collection-section {
+    background-color: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    max-width: 700px;
+    width: 100%;
+  }
+  
+  .collection-section h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 25px;
+    color: #2b4f81;
+    border-bottom: 2px solid #e0e7f3;
+    padding-bottom: 10px;
+  }
+  
+  .no-collections {
+    text-align: center;
+    color: #888;
+    font-size: 16px;
+  }
+  
+  .collection-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .collection-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f7faff;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .collection-item:hover {
+    background-color: #e6f0ff;
+  }
+  
+  .collection-link {
+    color: #2b4f81;
+    font-size: 18px;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .collection-link:hover {
+    text-decoration: underline;
+  }
+  
+  .evaluate-button {
+    background-color: #2b4f81;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+  }
+  
+  .evaluate-button:hover {
+    background-color: #2b4f81;
+  }
+  

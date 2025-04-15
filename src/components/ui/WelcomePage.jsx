@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import './WelcomePage.css'; // Import your new CSS file
 
 const WelcomePage = () => {
   const [collections, setCollections] = useState([]);
@@ -24,42 +25,32 @@ const WelcomePage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-blue-100 px-4 py-8">
-      <h1 className="text-4xl font-bold mb-4 text-blue-700">Welcome to the English Proficiency Dashboard</h1>
-      <p className="mb-4 text-lg text-gray-700">Choose an option to get started:</p>
+    <div className="welcome-container">
+      <div className="welcome-header">
+        <h1>Start your testing journey today!</h1>
+        <p>Choose an option to get started and begin your language journey with confidence.</p>
+        <Link to="/start-test" className="start-button">
+          Start a Test
+        </Link>
+      </div>
 
-      <Link
-        to="/start-test"
-        className="mb-8 bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
-      >
-        Start a Test
-      </Link>
-
-      <div className="w-full max-w-md bg-white rounded shadow p-4">
-        <h2 className="text-xl font-semibold mb-3 text-gray-800">Available Test Collections:</h2>
+      <div className="collection-section">
+        <h2>Available Test Collections</h2>
         {collections.length === 0 ? (
-          <p className="text-gray-600">No collections found.</p>
+          <p className="no-collections">No collections found.</p>
         ) : (
-          <ul className="space-y-2">
-          {collections.map((col) => (
-            <li
-              key={col.id}
-              className="flex justify-between items-center border p-2 rounded bg-gray-50 hover:bg-gray-100"
-            >
-              <Link to={`/collection/${col.id}`} className="text-blue-600 hover:underline">
-                {col.name}
-              </Link>
-        
-              <Link
-                to={`/evaluate/${col.id}`}
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded"
-              >
-                Evaluate
-              </Link>
-            </li>
-          ))}
-        </ul>
-        
+          <ul className="collection-list">
+            {collections.map((col) => (
+              <li key={col.id} className="collection-item">
+                <Link to={`/collection/${col.id}`} className="collection-link">
+                  {col.name}
+                </Link>
+                <Link to={`/evaluate/${col.id}`} className="evaluate-button">
+                  Evaluate
+                </Link>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </div>

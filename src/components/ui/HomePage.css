@@ -1,0 +1,107 @@
+body, html {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #F0F4F8;
+    color: #333;
+    height: 100%;
+    margin: 0;           /* Ensure no default margin */
+    padding: 0;          /* Ensure no default padding */
+  }
+  
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body, html {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to bottom right, #f0f4fb, #dce9ff);
+    color: #333;
+  }
+  
+  
+  /* Home Container */
+  .home-container {
+   color: #205781;
+    padding: 0;
+    margin: 0;
+}
+  
+  /* Header */
+  .header {
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to bottom right, #f0f4fb, #dce9ff);
+    padding: 20px 30px;
+    border-radius: 12px;
+    color: #2b4f81;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  
+  .brand-name {
+    font-size: 36px;
+    font-weight: 700;
+  }
+  /* Main Content Layout */
+.content-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 80px); /* full height minus header */
+    padding: 40px;
+    gap: 40px;
+  }
+  
+  /* Left Side - Info */
+  .info-container {
+    flex: 1;
+    padding-right: 20px;
+  }
+  
+  .info-container h2 {
+    font-size: 32px;
+    margin-bottom: 20px;
+    color: #2e3a59;
+  }
+  
+  .info-container p {
+    font-size: 18px;
+    line-height: 1.7;
+    color: #4a4a4a;
+  }
+  
+  .learn-more-link {
+    display: inline-block;
+    margin-top: 25px;
+    font-size: 18px;
+    color: black;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .learn-more-link:hover {
+    text-decoration: underline;
+  }
+  
+  /* Right Side - Image */
+  .image-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .image-container img {
+    max-width: 100%;
+    max-height: 400px;
+    height: auto;
+    border-radius: 12px;
+  }
+  

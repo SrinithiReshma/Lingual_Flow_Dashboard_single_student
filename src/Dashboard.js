@@ -12,13 +12,13 @@ const API_KEY = 'standard_849d30cfda41bec486c6cc6abbbffa650686f26fd69e3e76e6a8eb
 const COLORS = ["#4A90E2", "#50E3C2", "#F5A623", "#D0021B", "#9B9B9B"];
 
 function Dashboard() {
-    const { id } = useParams(); // Dynamic document ID
+    const { collectionId, id } = useParams(); 
     const [studentData, setStudentData] = useState(null);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         axios.get(
-            `https://cloud.appwrite.io/v1/databases/67d5be53002f133cb332/collections/67d5be71001688b1cb93/documents/${id}`,
+            `https://cloud.appwrite.io/v1/databases/67d5be53002f133cb332/collections/${collectionId}/documents/${id}`,
             {
                 headers: {
                     "X-Appwrite-Project": "67d5bc1d002708a5e2b8",
@@ -83,7 +83,7 @@ function Dashboard() {
                     {/* Bar Chart */}
                     <div className="chart-box">
                         <h4 className="chart-title">Score Breakdown</h4>
-                        <ComposedChart width={400} height={250} data={scores} layout="vertical">
+                        <ComposedChart width={350} height={250} data={scores} layout="vertical">
                             <XAxis type="number" domain={[0, 100]} hide />
                             <YAxis dataKey="skill" type="category" width={100} />
                             <Tooltip />

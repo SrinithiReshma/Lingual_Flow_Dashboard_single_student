@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import './StudentAnalysisPage.css'; // Import your new CSS file
 
 const StudentAnalysisPage = () => {
   const { collectionId, studentId } = useParams();
@@ -21,9 +22,15 @@ const StudentAnalysisPage = () => {
   }, [collectionId, studentId]);
 
   return (
-    <div className="p-8 text-center">
-      <h2 className="text-3xl font-bold text-purple-700 mb-4">Grammar Analysis</h2>
-      <p className="text-lg text-gray-800">{message}</p>
+    <div className="analysis-container">
+      <div className="analysis-header">
+        <h2>Grammar Analysis</h2>
+        <p>Your student's grammar analysis results are displayed here.</p>
+      </div>
+
+      <div className="analysis-content">
+        <p className="analysis-message">{message}</p>
+      </div>
     </div>
   );
 };

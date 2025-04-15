@@ -1,0 +1,113 @@
+/* Main container */
+.details-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(to bottom right, #f0f4fb, #dce9ff);
+    padding: 60px 30px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  
+  /* Title section */
+  .title {
+    font-size: 36px;
+    font-weight: bold;
+    color: #2b4f81;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .back-link {
+    font-size: 18px;
+    color: #2b4f81;
+    text-decoration: underline;
+    margin-bottom: 20px;
+  }
+  
+  .loading-text {
+    font-size: 16px;
+    color: #555;
+    text-align: center;
+  }
+  
+  /* Table styling */
+  .student-table-container {
+    width: 100%;
+    max-width: 1200px; /* Increased max width */
+    background-color: #fff;
+    padding: 40px; /* Increased padding */
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  .student-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+  }
+  
+  .student-table th,
+  .student-table td {
+    padding: 18px 20px; /* Increased padding for better spacing */
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .student-table th {
+    background-color: #2b4f81;
+    color: white;
+  }
+  
+  .actions {
+    display: flex;
+    flex-direction: row; /* Align buttons in a row */
+    justify-content: center; /* Center buttons horizontally */
+    gap: 15px; /* Increased space between buttons */
+  }
+  
+  /* Buttons */
+  .btn {
+    padding: 15px 30px; /* Increased padding for larger buttons */
+    border-radius: 25px;
+    font-size: 16px; /* Larger font size */
+    width: 150px; /* Increased width for larger buttons */
+    height: 50px; /* Increased height for a uniform size */
+    background-color: #2b4f81; /* Set the same background color for all buttons */
+    color: white;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .btn:hover {
+    opacity: 0.8;
+  }
+  
+  /* Input file styling */
+  .file-input {
+    margin: 10px 0;
+  }
+  
+  /* Responsive styling */
+  @media (max-width: 768px) {
+    .student-table th, .student-table td {
+      padding: 15px 18px; /* Adjusted padding for smaller screens */
+    }
+  
+    .details-container {
+      padding: 30px 15px;
+    }
+  
+    .title {
+      font-size: 28px;
+    }
+  
+    .btn {
+      width: 140px; /* Adjust button size for smaller screens */
+      height: 45px;
+      font-size: 14px; /* Slightly smaller font size on small screens */
+    }
+  }
+  
