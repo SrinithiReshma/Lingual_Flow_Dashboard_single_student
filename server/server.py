@@ -72,8 +72,8 @@ def create_test():
         return jsonify({"error": "Collection name is required"}), 400
 
     # Append timestamp to ensure uniqueness
-    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    collection_name = f"{custom_name}_{timestamp}"
+    
+    collection_name = f"{custom_name}"
 
     try:
         response = databases.create_collection(
@@ -94,7 +94,6 @@ def create_test():
         databases.create_string_attribute(database_id, new_collection_id, "transcribe_txt", 10000, False)
         databases.create_string_attribute(database_id, new_collection_id, "vocab_suggestion", 1000, False)
         databases.create_string_attribute(database_id, new_collection_id, "grammar_suggestion", 1000, False)
-        databases.create_string_attribute(database_id, new_collection_id, "mispronounced_words", 1000, False)
         databases.create_string_attribute(database_id, new_collection_id, "grade", 10, False)
         databases.create_string_attribute(database_id, new_collection_id, "audio_url", 500, False)
         databases.create_integer_attribute(database_id, new_collection_id, "vocab_score", False)
