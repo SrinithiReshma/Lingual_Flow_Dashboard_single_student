@@ -173,6 +173,20 @@ def get_collections():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/students/<collection_id>/<student_id>', methods=['GET'])
+def get_single_student(collection_id, student_id):
+    try:
+        # Fetch the document with the given ID from the specific collection
+        student = databases.get_document(
+            database_id=database_id,
+            collection_id=collection_id,
+            document_id=student_id
+        )
+        return jsonify(student), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 
 @app.route('/students/<document_id>', methods=['PATCH'])
 def update_student_audio_url(document_id):

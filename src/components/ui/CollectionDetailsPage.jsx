@@ -6,6 +6,7 @@ import './CollectionDetailsPage.css'; // Import your new CSS file
 
 const CollectionDetailsPage = () => {
   const [selectedFiles, setSelectedFiles] = useState({});
+  
   const { collectionId } = useParams();
 
   const [students, setStudents] = useState([]);
@@ -69,6 +70,7 @@ const CollectionDetailsPage = () => {
 
           alert("✅ Recording uploaded & student updated.");
           window.location.reload();
+          
         } catch (error) {
           console.error("❌ Upload failed:", error);
           alert("❌ Failed to upload audio.");
@@ -120,31 +122,60 @@ const CollectionDetailsPage = () => {
       alert("✅ Audio file uploaded and student updated.");
       setSelectedFiles((prev) => ({ ...prev, [studentId]: null }));
       window.location.reload();
+      
     } catch (error) {
       console.error("❌ Upload failed:", error);
       alert("❌ Failed to upload audio file.");
     }
   };
 
-  const handleAnalyse = async (studentId, audioURL, collectionId) => {
-    console.log("DEBUG:", { studentId, audioURL, collectionId });
+  const handleAnalyse = async (studentId, collectionId) => {
+    const res = await fetch(`http://localhost:5000/students/${collectionId}/${studentId}`);
+    const data = await res.json();
 
-    if (!studentId || !audioURL || !collectionId) {
-      console.error("Missing required fields", { studentId, audioURL, collectionId });
+    if (!data.audio_url) {
+      alert("❌ No file uploaded for this student.");
       return;
     }
+    
+
+    
 
     try {
       const response = await axios.post("http://localhost:5000/transcribe", {
         studentId,
-        audioURL,
+        audioURL: data.audio_url,
         collectionId, // Ensure this is passed
       });
+     
+      alert("✅ Successfully stored in database. Ready to view dashboard.");
       // Handle the response here
     } catch (error) {
       console.error("API Error:", error);
+          alert("❌ Failed to analyze audio.");
+
     }
   };
+
+  const handleView = (studentId, collectionId) => {
+    // Fetch student data to check if 'total_score' is empty
+    fetch(`http://localhost:5000/students/${collectionId}/${studentId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.total_score) {
+          alert("❌ Audio file not analyzed yet. Total score is missing.");
+        } else {
+          // If total_score is not empty, navigate to the dashboard
+          window.location.href = `/dashboard/${collectionId}/${studentId}`;
+        }
+      })
+      .catch(error => {
+        console.error("Error fetching student data:", error);
+        alert("❌ Failed to fetch student data.");
+      });
+  };
+  
+  
 
   return (
     <div className="details-container">
@@ -188,18 +219,22 @@ const CollectionDetailsPage = () => {
                       <button onClick={() => submitUpload(student.$id)} className="btn submit-btn">Submit</button>
                     )}
 
-                    {student.audio_url && (
+                    
                       <button
-                        onClick={() => handleAnalyse(student.$id, student.audio_url, collectionId)}
+                        onClick={() => handleAnalyse(student.$id, collectionId)}
                         className="btn analyse-btn"
                       >
                         Analyse
                       </button>
-                    )}
+                    
 
-                    <Link to={`/dashboard/${collectionId}/${student.$id}`} className="btn dashboard-btn">
-                      View 
-                    </Link>
+                      <button
+  onClick={() => handleView(student.$id, collectionId)}
+  className="btn dashboard-btn"
+>
+  View
+</button>
+
                   </td>
                 </tr>
               ))}
