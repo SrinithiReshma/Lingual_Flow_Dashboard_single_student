@@ -2,7 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Client, Storage, ID } from 'appwrite';
 import axios from 'axios';
-import './CollectionDetailsPage.css'; // Import your new CSS file
+import './CollectionDetailsPage.css';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 const CollectionDetailsPage = () => {
   const [selectedFiles, setSelectedFiles] = useState({});
@@ -68,12 +71,12 @@ const CollectionDetailsPage = () => {
             body: JSON.stringify({ audio_url: audioURL, collectionId: collectionId }),
           });
 
-          alert("✅ Recording uploaded & student updated.");
+          toast.success("✅ Recording uploaded & student updated.");
           window.location.reload();
           
         } catch (error) {
           console.error("❌ Upload failed:", error);
-          alert("❌ Failed to upload audio.");
+        toast.error("❌ Failed to upload audio.");
         }
 
         setRecordingStudentId(null);
@@ -104,7 +107,7 @@ const CollectionDetailsPage = () => {
   const submitUpload = async (studentId) => {
     const file = selectedFiles[studentId];
     if (!file) {
-      alert("❌ No file selected.");
+      toast.error("❌ No file selected.");
       return;
     }
 
@@ -119,13 +122,13 @@ const CollectionDetailsPage = () => {
         body: JSON.stringify({ audio_url: audioURL, collectionId: collectionId }),
       });
 
-      alert("✅ Audio file uploaded and student updated.");
+      toast.success("✅ Audio file uploaded and student updated.");
       setSelectedFiles((prev) => ({ ...prev, [studentId]: null }));
       window.location.reload();
       
     } catch (error) {
       console.error("❌ Upload failed:", error);
-      alert("❌ Failed to upload audio file.");
+      toast.error("❌ Failed to upload audio file.");
     }
   };
 
@@ -134,7 +137,7 @@ const CollectionDetailsPage = () => {
     const data = await res.json();
 
     if (!data.audio_url) {
-      alert("❌ No file uploaded for this student.");
+      toast.error("❌ No file uploaded for this student.");
       return;
     }
     
@@ -148,11 +151,11 @@ const CollectionDetailsPage = () => {
         collectionId, // Ensure this is passed
       });
      
-      alert("✅ Successfully stored in database. Ready to view dashboard.");
+      toast.success("✅ Successfully stored in database. Ready to view dashboard.");
       // Handle the response here
     } catch (error) {
       console.error("API Error:", error);
-          alert("❌ Failed to analyze audio.");
+      toast.error("❌ Failed to analyze audio.");
 
     }
   };
@@ -163,7 +166,7 @@ const CollectionDetailsPage = () => {
       .then(res => res.json())
       .then(data => {
         if (!data.total_score) {
-          alert("❌ Audio file not analyzed yet. Total score is missing.");
+          toast.error("❌ Audio file not analyzed yet. Total score is missing.");
         } else {
           // If total_score is not empty, navigate to the dashboard
           window.location.href = `/dashboard/${collectionId}/${studentId}`;
@@ -171,7 +174,7 @@ const CollectionDetailsPage = () => {
       })
       .catch(error => {
         console.error("Error fetching student data:", error);
-        alert("❌ Failed to fetch student data.");
+        toast.error("❌ Failed to fetch student data.");
       });
   };
   
