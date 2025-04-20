@@ -210,6 +210,42 @@ def update_student_audio_url(document_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/analyse-student/<student_id>', methods=['GET']) 
+def analyse_student(student_id):
+    results = []
+    try:
+        collections = databases.list_collections(database_id)["collections"]
+        for collection in collections:
+            collection_id = collection["$id"]
+            if collection_id == student_collection_id:
+                continue
+            try:
+                docs = databases.list_documents(database_id, collection_id)["documents"]
+                for doc in docs:
+                    if doc.get("student_id") == student_id:
+                        try:
+                            result = {
+                                "collection": collection["name"],
+                                "vocab_score": int(doc.get("vocab_score", 0)),
+                                "pronunciation_score": int(doc.get("pronunciation_score", 0)),
+                                "fluency_score": int(doc.get("fluency_score", 0)),
+                                "context_score": int(doc.get("context_score", 0)),
+                                "grammar_score": int(doc.get("grammar_score", 0)),
+                                "total_score": int(doc.get("total_score", 0)),
+                            }
+                            results.append(result)
+                        except (ValueError, TypeError):
+                            continue  # Skip documents with invalid (non-integer) scores
+            except Exception:
+                continue
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify(results), 200
+
+
+
+
 
 def transcribe_audio(file_path):
     print("🧠 Transcribing audio with Whisper...")

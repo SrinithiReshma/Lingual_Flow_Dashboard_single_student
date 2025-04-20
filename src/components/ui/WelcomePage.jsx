@@ -1,12 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'; 
 import './WelcomePage.css';
 import './Modal.css'; // CSS for modal styling
+import { useNavigate } from 'react-router-dom';
 
 const WelcomePage = () => {
   const [collections, setCollections] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
   const [collectionName, setCollectionName] = useState('');
+  const [studentId, setStudentId] = useState('');
   const [message, setMessage] = useState('');
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCollections = async () => {
@@ -32,9 +37,7 @@ const WelcomePage = () => {
     try {
       const response = await fetch('http://127.0.0.1:5000/create-test', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ collectionName }),
       });
 
@@ -52,6 +55,13 @@ const WelcomePage = () => {
     }
   };
 
+  const handleStudentAnalyse = (e) => {
+    e.preventDefault();
+    if (studentId.trim()) {
+      navigate(`/analyse/${studentId}`);
+    }
+  };
+
   return (
     <div className="welcome-container">
       <div className="welcome-header">
@@ -59,6 +69,9 @@ const WelcomePage = () => {
         <p>Choose an option to get started and begin your language journey with confidence.</p>
         <button onClick={() => setIsModalOpen(true)} className="start-button">
           Start a Test
+        </button>
+        <button onClick={() => setIsStudentModalOpen(true)} className="start-button" style={{ marginLeft: '10px' }}>
+          Analyse Particular Student
         </button>
       </div>
 
@@ -70,19 +83,15 @@ const WelcomePage = () => {
           <ul className="collection-list">
             {collections.map((col) => (
               <li key={col.id} className="collection-item">
-                <a href={`/collection/${col.id}`} className="collection-link">
-                  {col.name}
-                </a>
-                <a href={`/evaluate/${col.id}`} className="evaluate-button">
-                  Evaluate
-                </a>
+                <a href={`/collection/${col.id}`} className="collection-link">{col.name}</a>
+                <a href={`/evaluate/${col.id}`} className="evaluate-button">Evaluate</a>
               </li>
             ))}
           </ul>
         )}
       </div>
 
-      {/* Modal Dialog */}
+      {/* Test Creation Modal */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal">
@@ -100,6 +109,28 @@ const WelcomePage = () => {
               />
               <button type="submit" className="modal-create-button">Create Test</button>
               {message && <p className="modal-message">{message}</p>}
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Student Analyse Modal */}
+      {isStudentModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <button className="close-button" onClick={() => { setIsStudentModalOpen(false); setMessage(''); }}>
+              &times;
+            </button>
+            <form onSubmit={handleStudentAnalyse}>
+              <h2>Enter Student ID</h2>
+              <input
+                type="text"
+                placeholder="Enter student ID"
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
+                required
+              />
+              <button type="submit" className="modal-create-button">Analyse</button>
             </form>
           </div>
         </div>

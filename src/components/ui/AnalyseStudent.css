@@ -1,0 +1,28 @@
+.analyse-container {
+    min-height: 100vh;
+    padding: 50px 30px;
+    background: linear-gradient(to bottom right, #f0f4fb, #dce9ff);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .analyse-title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #2b4f81;
+    margin-bottom: 40px;
+    text-align: center;
+  }
+  
+  .chart-container {
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 40px;
+  }
+  
