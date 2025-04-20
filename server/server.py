@@ -5,6 +5,7 @@ from appwrite.client import Client
 from appwrite.query import Query
 from appwrite.services.databases import Databases
 import datetime
+from urllib.parse import urlparse
 import tempfile
 import requests
 import whisper
@@ -341,7 +342,10 @@ def grammar_suggestions_only(transcript: str) -> str:
         print("❌ Error generating grammar suggestions:", e)
         return ""
 def google_search(topic, num_results=5):
-    return list(search(topic, num_results=num_results, lang="en"))
+    results = list(search(topic, num_results=num_results, lang="en"))
+    # Filter out invalid URLs
+    valid_urls = [url for url in results if urlparse(url).scheme in ['http', 'https']]
+    return valid_urls
 
 def scrape_text(url):
     try:
@@ -365,6 +369,7 @@ def compare_with_online_sources(topic, transcript):
     urls = google_search(topic)
     sims = []
     for url in urls:
+        print(f"Scraping URL: {url}")
         txt = scrape_text(url)
         if txt:
             sims.append((url, compute_similarity(transcript, txt)))

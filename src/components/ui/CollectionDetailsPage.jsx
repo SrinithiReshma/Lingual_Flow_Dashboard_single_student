@@ -2,18 +2,31 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Client, Storage, ID } from 'appwrite';
 import axios from 'axios';
-import './CollectionDetailsPage.css'; // Import your new CSS file
+import './CollectionDetailsPage.css';
+import DialogBox from './DialogBox';
 
 const CollectionDetailsPage = () => {
   const [selectedFiles, setSelectedFiles] = useState({});
-  
   const { collectionId } = useParams();
-
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mediaRecorder, setMediaRecorder] = useState(null);
   const [audioChunks, setAudioChunks] = useState([]);
   const [recordingStudentId, setRecordingStudentId] = useState(null);
+
+  // ✅ Dialog state
+  const [dialog, setDialog] = useState({ isOpen: false, title: '', message: '', reload: false });
+
+  const showDialog = (title, message, reload = false) => {
+    setDialog({ isOpen: true, title, message, reload });
+  };
+
+  const closeDialog = () => {
+    setDialog({ ...dialog, isOpen: false });
+    if (dialog.reload) {
+      window.location.reload();
+    }
+  };
 
   // ✅ Appwrite setup
   const client = new Client()
@@ -35,7 +48,6 @@ const CollectionDetailsPage = () => {
         setLoading(false);
       }
     };
-
     fetchStudents();
   }, [collectionId]);
 
@@ -56,24 +68,19 @@ const CollectionDetailsPage = () => {
         const file = new File([audioBlob], `${studentId}.webm`, { type: 'audio/webm' });
 
         try {
-          // ✅ Upload to Appwrite Storage
           const res = await storage.createFile(BUCKET_ID, ID.unique(), file);
-
           const audioURL = `https://cloud.appwrite.io/v1/storage/buckets/${BUCKET_ID}/files/${res.$id}/view?project=67d5bc1d002708a5e2b8`;
 
-          // ✅ Update backend with audio_url
           await fetch(`http://localhost:5000/students/${studentId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ audio_url: audioURL, collectionId: collectionId }),
+            body: JSON.stringify({ audio_url: audioURL, collectionId }),
           });
 
-          alert("✅ Recording uploaded & student updated.");
-          window.location.reload();
-          
+          showDialog("Success", "✅ Recording uploaded & student updated.", true);
         } catch (error) {
           console.error("❌ Upload failed:", error);
-          alert("❌ Failed to upload audio.");
+          showDialog("Error", "❌ Failed to upload audio.");
         }
 
         setRecordingStudentId(null);
@@ -98,34 +105,29 @@ const CollectionDetailsPage = () => {
     const file = event.target.files[0];
     if (!file) return;
     setSelectedFiles((prev) => ({ ...prev, [studentId]: file }));
-    
   };
 
   const submitUpload = async (studentId) => {
     const file = selectedFiles[studentId];
     if (!file) {
-      alert("❌ No file selected.");
+      showDialog("❌ No file selected.");
       return;
     }
 
     try {
       const res = await storage.createFile(BUCKET_ID, ID.unique(), file);
-
       const audioURL = `https://cloud.appwrite.io/v1/storage/buckets/${BUCKET_ID}/files/${res.$id}/view?project=67d5bc1d002708a5e2b8`;
 
       await fetch(`http://localhost:5000/students/${studentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audio_url: audioURL, collectionId: collectionId }),
+        body: JSON.stringify({ audio_url: audioURL, collectionId }),
       });
 
-      alert("✅ Audio file uploaded and student updated.");
-      setSelectedFiles((prev) => ({ ...prev, [studentId]: null }));
-      window.location.reload();
-      
+      showDialog("Success", "✅ Audio file uploaded and student updated.", true);
     } catch (error) {
       console.error("❌ Upload failed:", error);
-      alert("❌ Failed to upload audio file.");
+      showDialog("Error", "❌ Failed to upload audio file.");
     }
   };
 
@@ -134,48 +136,39 @@ const CollectionDetailsPage = () => {
     const data = await res.json();
 
     if (!data.audio_url) {
-      alert("❌ No file uploaded for this student.");
+      showDialog("❌ No file uploaded for this student.");
       return;
     }
-    
-
-    
 
     try {
       const response = await axios.post("http://localhost:5000/transcribe", {
         studentId,
         audioURL: data.audio_url,
-        collectionId, // Ensure this is passed
+        collectionId,
       });
-     
-      alert("✅ Successfully stored in database. Ready to view dashboard.");
-      // Handle the response here
+
+      showDialog("Success", "✅ Successfully stored in database. Ready to view dashboard.");
     } catch (error) {
       console.error("API Error:", error);
-          alert("❌ Failed to analyze audio.");
-
+      showDialog("Error", "❌ Failed to analyze audio.");
     }
   };
 
   const handleView = (studentId, collectionId) => {
-    // Fetch student data to check if 'total_score' is empty
     fetch(`http://localhost:5000/students/${collectionId}/${studentId}`)
       .then(res => res.json())
       .then(data => {
         if (!data.total_score) {
-          alert("❌ Audio file not analyzed yet. Total score is missing.");
+          showDialog("❌ Audio file not analyzed yet. Total score is missing.");
         } else {
-          // If total_score is not empty, navigate to the dashboard
           window.location.href = `/dashboard/${collectionId}/${studentId}`;
         }
       })
       .catch(error => {
         console.error("Error fetching student data:", error);
-        alert("❌ Failed to fetch student data.");
+        showDialog("❌ Failed to fetch student data.");
       });
   };
-  
-  
 
   return (
     <div className="details-container">
@@ -219,22 +212,19 @@ const CollectionDetailsPage = () => {
                       <button onClick={() => submitUpload(student.$id)} className="btn submit-btn">Submit</button>
                     )}
 
-                    
-                      <button
-                        onClick={() => handleAnalyse(student.$id, collectionId)}
-                        className="btn analyse-btn"
-                      >
-                        Analyse
-                      </button>
-                    
+                    <button
+                      onClick={() => handleAnalyse(student.$id, collectionId)}
+                      className="btn analyse-btn"
+                    >
+                      Analyse
+                    </button>
 
-                      <button
-  onClick={() => handleView(student.$id, collectionId)}
-  className="btn dashboard-btn"
->
-  View
-</button>
-
+                    <button
+                      onClick={() => handleView(student.$id, collectionId)}
+                      className="btn dashboard-btn"
+                    >
+                      View
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -242,6 +232,14 @@ const CollectionDetailsPage = () => {
           </table>
         </div>
       )}
+
+      {/* ✅ Dialog Box with OK button */}
+      <DialogBox
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        onClose={closeDialog}
+      />
     </div>
   );
 };
