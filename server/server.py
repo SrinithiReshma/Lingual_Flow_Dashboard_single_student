@@ -63,7 +63,7 @@ client.set_key("standard_849d30cfda41bec486c6cc6abbbffa650686f26fd69e3e76e6a8ebc
 
 databases = Databases(client)
 database_id = "67d5be53002f133cb332"
-student_collection_id = "67f3ae5300238195f90b"
+student_collection_id = "68047901744e14ede9cf" 
 
 @app.route('/create-test', methods=['POST'])
 def create_test():
@@ -72,10 +72,9 @@ def create_test():
     if not custom_name:
         return jsonify({"error": "Collection name is required"}), 400
 
-    # Append timestamp to ensure uniqueness
-    
     collection_name = f"{custom_name}"
 
+    # Step 1: Create collection
     try:
         response = databases.create_collection(
             database_id=database_id,
@@ -86,15 +85,18 @@ def create_test():
         )
         new_collection_id = response["$id"]
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Collection creation failed: {str(e)}"}), 500
 
-    # Add attributes
+    # Step 2: Add attributes
     try:
+        # Required fields
         databases.create_string_attribute(database_id, new_collection_id, "student_id", 20, True)
         databases.create_string_attribute(database_id, new_collection_id, "name", 50, True)
-        databases.create_string_attribute(database_id, new_collection_id, "transcribe_txt", 10000, False)
-        databases.create_string_attribute(database_id, new_collection_id, "vocab_suggestion", 1000, False)
-        databases.create_string_attribute(database_id, new_collection_id, "grammar_suggestion", 1000, False)
+
+        # Additional fields
+        databases.create_string_attribute(database_id, new_collection_id, "transcribe_txt", 30000, False)
+        databases.create_string_attribute(database_id, new_collection_id, "vocab_suggestion", 30000, False)
+        databases.create_string_attribute(database_id, new_collection_id, "grammar_suggestion", 30000, False)
         databases.create_string_attribute(database_id, new_collection_id, "grade", 10, False)
         databases.create_string_attribute(database_id, new_collection_id, "audio_url", 500, False)
         databases.create_integer_attribute(database_id, new_collection_id, "vocab_score", False)
@@ -106,14 +108,21 @@ def create_test():
     except Exception as e:
         return jsonify({"error": f"Collection created, but attribute creation failed: {str(e)}"}), 500
 
-    # Fetch students
+    # Step 3: Fetch students
     try:
         student_docs = databases.list_documents(database_id=database_id, collection_id=student_collection_id)
         students = student_docs["documents"]
     except Exception as e:
         return jsonify({"error": f"Collection created, but failed to fetch students: {str(e)}"}), 500
 
-    # Insert student records
+    try:
+        print(f"Fetching from student_collection_id: {student_collection_id}")  # Debug log
+        student_docs = databases.list_documents(database_id=database_id, collection_id=student_collection_id)
+        students = student_docs["documents"]
+    except Exception as e:
+        return jsonify({"error": f"Collection created, but failed to fetch students: {str(e)}"}), 500
+
+    # Step 4: Insert each student into the new collection
     for student in students:
         try:
             databases.create_document(
@@ -121,12 +130,13 @@ def create_test():
                 collection_id=new_collection_id,
                 document_id="unique()",
                 data={
-                    "student_id": student["student_id"],
-                    "name": student["name"]
+                    "student_id": student.get("student_id", ""),
+                    "name": student.get("name", "")
                 }
             )
-        except:
-            continue  # skip errors silently
+        except Exception as e:
+            print(f"Failed to insert student: {student}. Error: {e}")
+            continue
 
     return jsonify({"message": f"Collection '{collection_name}' created and students added."})
 @app.route('/get-student-names', methods=['POST'])
@@ -252,16 +262,18 @@ def transcribe_audio(file_path):
     model = whisper.load_model("medium.en")  # Use "base", "small", etc., for lighter model
     result = model.transcribe(file_path)
     return result["text"]
+
 def generate_vocabulary_suggestions(transcript: str) -> str:
     model = genai.GenerativeModel("gemini-1.5-flash")
     prompt = (
         "The transcript given is a transcript of a speaker who knows only basic English, "
-        "so I need you to give some words that can be used instead of others. "
-        "Don't give any other content."
+        "so I need you to give few words that can be used instead of others. "
+        "Don't give any other content. Output format: 'Original word:alternate word"
         f"\n\nText: {transcript}"
     )
     try:
         response = model.generate_content(prompt)
+        print(response.text)
         return response.text
     except Exception as e:
         print("❌ Error generating vocabulary suggestions:", e)
@@ -377,6 +389,20 @@ def grammar_suggestions_only(transcript: str) -> str:
     except Exception as e:
         print("❌ Error generating grammar suggestions:", e)
         return ""
+def extract_topic_with_gemini(transcript: str) -> str:
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    prompt = (
+        "Analyze the following transcript and extract the **main topic** or subject. "
+        "Be concise. Return just the topic as a phrase or sentence.\n\n"
+        f"Transcript:\n{transcript}"
+    )
+    try:
+        print(model.generate_content(prompt).text.strip())
+        return model.generate_content(prompt).text.strip()
+    except Exception as e:
+        print("❌ Error extracting topic from transcript:", e)
+        return "Self Introduction"
+
 def google_search(topic, num_results=5):
     results = list(search(topic, num_results=num_results, lang="en"))
     # Filter out invalid URLs
@@ -569,7 +595,7 @@ def transcribe():
         minor, moderate, major = categorize_errors(grammar_sugg)
         grammar_score = calculate_grammar_score(transcription, minor, moderate, major)
         grammar_score_int = int(grammar_score) 
-        topic = data.get("topic") or transcription.split(".")[0]
+        topic = data.get("topic") or extract_topic_with_gemini(transcription)
         sims = compare_with_online_sources(topic, transcription)
         context_score = int(calculate_top_score(sims))
         fluency_score = calculate_fluency_score(audio_path)

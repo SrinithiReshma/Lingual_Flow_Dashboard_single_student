@@ -75,6 +75,14 @@ function Dashboard() {
                 </PieChart>
                 <div className="gauge-score">{totalScore.toFixed(2)}%</div>
             </div>
+            {/* Grade Card */}
+           <div className="grade-card">
+        <h3 className="section-title">CEFR Grade</h3>
+        <div className={`grade-box grade-${studentData.grade?.toLowerCase()}`}>
+        {studentData.grade || "N/A"}
+          </div>
+           </div>
+
 
             {/* Score Visualization */}
             <div className="charts-container">

@@ -5,6 +5,41 @@
     margin: auto;
     font-family: Arial, sans-serif;
 }
+.grade-card {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.grade-box {
+    display: inline-block;
+    padding: 1rem 2rem;
+    font-size: 2rem;
+    font-weight: bold;
+    border-radius: 12px;
+    background-color: #f5f5f5;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+.grade-a1, .grade-a2 {
+    background-color: #d0f0c0;
+    color: #2e7d32;
+}
+
+.grade-b1, .grade-b2 {
+    background-color: #cce5ff;
+    color: #0056b3;
+}
+
+.grade-c1, .grade-c2 {
+    background-color: #ffe0b2;
+    color: #ef6c00;
+}
+
+.grade-na {
+    background-color: #eeeeee;
+    color: #999;
+}
 
 .title {
     text-align: center;
