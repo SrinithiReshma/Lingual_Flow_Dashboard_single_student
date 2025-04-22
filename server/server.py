@@ -8,6 +8,7 @@ import datetime
 from urllib.parse import urlparse
 import tempfile
 import requests
+from appwrite.id import ID
 import whisper
 import os
 import nltk
@@ -173,7 +174,7 @@ def get_collections():
     try:
         response = databases.list_collections(database_id)
         collections = response["collections"]
-        EXCLUDED_COLLECTION_ID = "67f3ae5300238195f90b"
+        EXCLUDED_COLLECTION_ID = "68047901744e14ede9cf"
 
         result = [
             {"id": col["$id"], "name": col["name"]}
@@ -197,6 +198,37 @@ def get_single_student(collection_id, student_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/students', methods=['GET'])
+def get_students():
+    result = databases.list_documents("67d5be53002f133cb332", "68047901744e14ede9cf")
+    return jsonify(result['documents'])
+
+@app.route('/delete-student/<string:id>', methods=['DELETE'])
+def delete_student(id):
+    try:
+        databases.delete_document("67d5be53002f133cb332", "68047901744e14ede9cf", id)
+        return jsonify({'message': 'Student deleted'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/add-student', methods=['POST'])
+def add_student():
+    data = request.json
+    student_id = data.get('studentId')
+    name = data.get('name')
+    try:
+        databases.create_document(
+            "67d5be53002f133cb332",  # Database ID
+            "68047901744e14ede9cf",  # Collection ID
+            ID.unique(),
+            {
+                "student_id": student_id,
+                "name": name
+            }
+        )
+        return jsonify({"message": f"Student {name} added successfully."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/students/<document_id>', methods=['PATCH'])

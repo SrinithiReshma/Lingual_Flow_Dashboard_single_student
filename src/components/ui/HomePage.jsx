@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './HomePage.css';
-import boy from 'C:/Users/srini/Desktop/english-proficiency-dashboard/src/boy.png';
+import boy from 'D:/Lingual_flow_dash/src/boy.png';
 
 const HomePage = () => {
   return (

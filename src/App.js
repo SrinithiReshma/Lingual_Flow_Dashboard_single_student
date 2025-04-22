@@ -8,7 +8,7 @@ import AnalyseStudent from './components/ui/AnalyseStudent';
 import CollectionDetailsPage from './components/ui/CollectionDetailsPage';
 import EvaluatePage from './components/ui/EvaluatePage';
 import HomePage from './components/ui/HomePage'; // ✅ Front Page
-
+import ManageStudents from './components/ui/ManageStudents';
 function App() {
   return (
     <Router>
@@ -25,6 +25,7 @@ function App() {
         <Route path="/start-test" element={<TestPage />} />
         <Route path="/evaluate/:collectionId" element={<EvaluatePage />} />
         <Route path="/dashboard/:collectionId/:id" element={<Dashboard />} />
+        <Route path="/manage-students" element={<ManageStudents />} /> {/* ✅ Route for CRUD */}
       </Routes>
     </Router>
   );

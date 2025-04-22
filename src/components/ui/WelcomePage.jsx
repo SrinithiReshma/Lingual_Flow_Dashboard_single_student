@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react'; 
+// WelcomePage.jsx
+import React, { useEffect, useState } from 'react';
 import './WelcomePage.css';
-import './Modal.css'; // CSS for modal styling
+import './Modal.css';
 import { useNavigate } from 'react-router-dom';
 
 const WelcomePage = () => {
@@ -18,12 +19,7 @@ const WelcomePage = () => {
       try {
         const response = await fetch("http://localhost:5000/get-collections");
         const data = await response.json();
-
-        if (Array.isArray(data)) {
-          setCollections(data);
-        } else {
-          console.error("Error fetching collections:", data.error);
-        }
+        if (Array.isArray(data)) setCollections(data);
       } catch (error) {
         console.error("Fetch error:", error);
       }
@@ -40,7 +36,6 @@ const WelcomePage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ collectionName }),
       });
-
       const data = await response.json();
       if (response.ok) {
         setMessage(data.message);
@@ -50,16 +45,13 @@ const WelcomePage = () => {
         setMessage(`Error: ${data.error}`);
       }
     } catch (err) {
-      console.error(err);
       setMessage('Network error');
     }
   };
 
   const handleStudentAnalyse = (e) => {
     e.preventDefault();
-    if (studentId.trim()) {
-      navigate(`/analyse/${studentId}`);
-    }
+    if (studentId.trim()) navigate(`/analyse/${studentId}`);
   };
 
   return (
@@ -67,11 +59,12 @@ const WelcomePage = () => {
       <div className="welcome-header">
         <h1>Start your testing journey today!</h1>
         <p>Choose an option to get started and begin your language journey with confidence.</p>
-        <button onClick={() => setIsModalOpen(true)} className="start-button">
-          Start a Test
-        </button>
+        <button onClick={() => setIsModalOpen(true)} className="start-button">Start a Test</button>
         <button onClick={() => setIsStudentModalOpen(true)} className="start-button" style={{ marginLeft: '10px' }}>
           Analyse Particular Student
+        </button>
+        <button onClick={() => navigate('/manage-students')} className="start-button" style={{ marginLeft: '10px' }}>
+          Student List
         </button>
       </div>
 
@@ -91,22 +84,14 @@ const WelcomePage = () => {
         )}
       </div>
 
-      {/* Test Creation Modal */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal">
-            <button className="close-button" onClick={() => { setIsModalOpen(false); setMessage(''); }}>
-              &times;
-            </button>
+            <button className="close-button" onClick={() => { setIsModalOpen(false); setMessage(''); }}>&times;</button>
             <form onSubmit={handleCreateTest}>
               <h2>Create New Test</h2>
-              <input
-                type="text"
-                placeholder="Enter test name"
-                value={collectionName}
-                onChange={(e) => setCollectionName(e.target.value)}
-                required
-              />
+              <input type="text" placeholder="Enter test name" value={collectionName}
+                onChange={(e) => setCollectionName(e.target.value)} required />
               <button type="submit" className="modal-create-button">Create Test</button>
               {message && <p className="modal-message">{message}</p>}
             </form>
@@ -114,22 +99,14 @@ const WelcomePage = () => {
         </div>
       )}
 
-      {/* Student Analyse Modal */}
       {isStudentModalOpen && (
         <div className="modal-overlay">
           <div className="modal">
-            <button className="close-button" onClick={() => { setIsStudentModalOpen(false); setMessage(''); }}>
-              &times;
-            </button>
+            <button className="close-button" onClick={() => { setIsStudentModalOpen(false); setMessage(''); }}>&times;</button>
             <form onSubmit={handleStudentAnalyse}>
               <h2>Enter Student ID</h2>
-              <input
-                type="text"
-                placeholder="Enter student ID"
-                value={studentId}
-                onChange={(e) => setStudentId(e.target.value)}
-                required
-              />
+              <input type="text" placeholder="Enter student ID" value={studentId}
+                onChange={(e) => setStudentId(e.target.value)} required />
               <button type="submit" className="modal-create-button">Analyse</button>
             </form>
           </div>
